@@ -5,12 +5,22 @@ import jm.task.core.jdbc.util.Util;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
     Util util = new Util();
 
+    private final String QUERY_CREATE_TABLE = "CREATE TABLE IF NOT EXISTS Users (\n" +
+            "  `id` BIGINT(20) NOT NULL AUTO_INCREMENT,\n" +
+            "  `name` VARCHAR(45) NULL,\n" +
+            "  `last_name` VARCHAR(45) NULL,\n" +
+            "  `age` SMALLINT(3) NULL,\n" +
+            "  PRIMARY KEY (`id`));";
+    private final String QUERY_DROP_TABLE = "DROP TABLE IF EXISTS Users;";
+    private final String QUERY_SAVE_USER = "INSERT INTO Users (`name`, `last_name`, `age`) VALUES (?,?,?)";
+    private final String QUERY_REMOVE_USER = "DELETE FROM Users WHERE ID = ?";
+    private final String QUERY_GET_USERS = "SELECT id,name,last_name,age FROM Users";
+    private final String QUERY_CLEAN_TABLE = "TRUNCATE TABLE Users";
 
 
     public UserDaoJDBCImpl() {
@@ -19,58 +29,30 @@ public class UserDaoJDBCImpl implements UserDao {
 
 
     public void createUsersTable() {
-        Statement statement = null;
-        try (Connection connection = util.getConnection()) {
-            statement = connection.createStatement();
-            String sql = "CREATE TABLE IF NOT EXISTS `My_scheme`.`Users` (\n" +
-                    "  `id` BIGINT(20) NOT NULL AUTO_INCREMENT,\n" +
-                    "  `name` VARCHAR(45) NULL,\n" +
-                    "  `last_name` VARCHAR(45) NULL,\n" +
-                    "  `age` SMALLINT(3) NULL,\n" +
-                    "  PRIMARY KEY (`id`));";
+        try (Connection connection = util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(QUERY_CREATE_TABLE)) {
 
-            statement.execute(sql);
-
+            preparedStatement.execute();
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     public void dropUsersTable() {
-        Statement statement = null;
-        try (Connection connection = util.getConnection()) {
-            statement = connection.createStatement();
-            String sql = "DROP TABLE IF EXISTS `My_scheme`.`Users`;";
+        try (Connection connection = util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(QUERY_DROP_TABLE)) {
 
-            statement.execute(sql);
+            preparedStatement.execute();
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        PreparedStatement preparedStatement = null;
-        try (Connection connection = util.getConnection()) {
-            String sql = "INSERT INTO `My_scheme`.`Users` (`name`, `last_name`, `age`) VALUES (?,?,?)";
-            preparedStatement = connection.prepareStatement(sql);
+        try (Connection connection = util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(QUERY_SAVE_USER)) {
 
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, lastName);
@@ -80,48 +62,27 @@ public class UserDaoJDBCImpl implements UserDao {
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     public void removeUserById(long id) {
-        PreparedStatement preparedStatement = null;
-        try (Connection connection = util.getConnection()) {
-            String sql = "DELETE FROM `My_scheme`.`Users` WHERE ID = ?";
-            preparedStatement = connection.prepareStatement(sql);
+        try (Connection connection = util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(QUERY_REMOVE_USER)) {
 
             preparedStatement.setLong(1, id);
             preparedStatement.execute();
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     public List<User> getAllUsers() {
         List<User> userList = new ArrayList<>();
-        Statement statement = null;
+        try (Connection connection = util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_USERS)) {
 
-        try (Connection connection = util.getConnection()) {
-            statement = connection.createStatement();
-            String sql = "SELECT id,name,last_name,age FROM My_scheme.Users;";
-
-            ResultSet rs = statement.executeQuery(sql);
+            ResultSet rs = preparedStatement.executeQuery();
 
             while (rs.next()) {
                 User user = new User();
@@ -132,41 +93,21 @@ public class UserDaoJDBCImpl implements UserDao {
 
                 userList.add(user);
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
         return userList;
     }
 
     public void cleanUsersTable() {
-        Statement statement = null;
-        try (Connection connection = util.getConnection()) {
+        try (Connection connection = util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(QUERY_CLEAN_TABLE)) {
 
-            statement = connection.createStatement();
-            String sql = "TRUNCATE TABLE My_scheme.Users;";
-
-            statement.execute(sql);
+            preparedStatement.execute();
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 }
